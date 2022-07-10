@@ -16,12 +16,12 @@ func main() {
 
 	router := web.NewRouter()
 
-	accApi := gateway.NewApi(*accountAddr)
+	api := gateway.NewApi(*accountAddr)
 
-	router.POST("users", accApi.CreateAccount())
-	router.PUT("users/:id", accApi.ModifyAccount())
-	router.DELETE("users/:id", accApi.DeleteAccount())
-	router.GET("users", accApi.GetAccounts())
+	router.POST("users", api.CreateAccount())
+	router.PUT("users/:id", api.ModifyAccount())
+	router.DELETE("users/:id", api.DeleteAccount())
+	router.GET("users", api.GetAccounts())
 
 	web.ServeHttp(*httpAddr, "gateway", router)
 }
