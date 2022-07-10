@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/semirm-dev/faceit/user"
+	"time"
 )
 
 type inmemory struct {
@@ -15,6 +16,8 @@ func NewAccountInmemory() *inmemory {
 
 func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*user.Account, error) {
 	account.Id = len(repo.accounts) + 1
+	account.CreatedAt = time.Now().UTC()
+	account.UpdatedAt = time.Now().UTC()
 
 	repo.accounts = append(repo.accounts, account)
 
@@ -24,7 +27,12 @@ func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*u
 func (repo *inmemory) ModifyAccount(ctx context.Context, id int, account *user.Account) (*user.Account, error) {
 	acc := repo.getById(id)
 	if acc != nil {
+		acc.Firstname = account.Firstname
+		acc.Lastname = account.Lastname
 		acc.Nickname = account.Nickname
+		acc.Email = account.Email
+		acc.Country = account.Country
+		acc.UpdatedAt = time.Now().UTC()
 	}
 
 	return acc, nil

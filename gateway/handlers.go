@@ -9,11 +9,20 @@ import (
 )
 
 type CreateAccount struct {
-	Nickname string
+	Firstname string `json:"first_name"`
+	Lastname  string `json:"last_name"`
+	Nickname  string `json:"nickname"`
+	Password  string `json:"password"`
+	Email     string `json:"email"`
+	Country   string `json:"country"`
 }
 
 type ModifyAccount struct {
-	Nickname string
+	Firstname string `json:"first_name"`
+	Lastname  string `json:"last_name"`
+	Nickname  string `json:"nickname"`
+	Email     string `json:"email"`
+	Country   string `json:"country"`
 }
 
 func (api *api) CreateAccount() gin.HandlerFunc {
@@ -26,7 +35,12 @@ func (api *api) CreateAccount() gin.HandlerFunc {
 		}
 
 		account, err := api.rpcClient.AddAccount(c.Request.Context(), &pbUser.AccountRequest{
-			Nickname: req.Nickname,
+			FirstName: req.Firstname,
+			LastName:  req.Lastname,
+			Nickname:  req.Nickname,
+			Password:  req.Password,
+			Email:     req.Email,
+			Country:   req.Country,
 		})
 		if err != nil {
 			logrus.Error(err)
@@ -56,8 +70,12 @@ func (api *api) ModifyAccount() gin.HandlerFunc {
 		}
 
 		account, err := api.rpcClient.ModifyAccount(c.Request.Context(), &pbUser.AccountMessage{
-			Id:       int64(id),
-			Nickname: req.Nickname,
+			Id:        int64(id),
+			FirstName: req.Firstname,
+			LastName:  req.Lastname,
+			Nickname:  req.Nickname,
+			Email:     req.Email,
+			Country:   req.Country,
 		})
 		if err != nil {
 			logrus.Error(err)

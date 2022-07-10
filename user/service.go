@@ -8,6 +8,7 @@ import (
 	pbUser "github.com/semirm-dev/faceit/user/proto"
 	"github.com/sirupsen/logrus"
 	grpcLib "google.golang.org/grpc"
+	"time"
 )
 
 const serviceName = "account management service"
@@ -133,20 +134,39 @@ func userAccountsToProto(accounts []*Account) []*pbUser.AccountMessage {
 
 func userAccountToProto(account *Account) *pbUser.AccountMessage {
 	return &pbUser.AccountMessage{
-		Id:       int64(account.Id),
-		Nickname: account.Nickname,
+		Id:        int64(account.Id),
+		FirstName: account.Firstname,
+		LastName:  account.Lastname,
+		Nickname:  account.Nickname,
+		Password:  account.Password,
+		Email:     account.Email,
+		Country:   account.Country,
+		CreatedAt: account.CreatedAt.String(),
+		UpdatedAt: account.UpdatedAt.String(),
 	}
 }
 
 func protoReqToUserAccount(pbAccount *pbUser.AccountRequest) *Account {
 	return &Account{
-		Nickname: pbAccount.Nickname,
+		Firstname: pbAccount.FirstName,
+		Lastname:  pbAccount.LastName,
+		Nickname:  pbAccount.Nickname,
+		Password:  pbAccount.Password,
+		Email:     pbAccount.Email,
+		Country:   pbAccount.Country,
 	}
 }
 
 func protoToUserAccount(pbAccount *pbUser.AccountMessage) *Account {
 	return &Account{
-		Id:       int(pbAccount.Id),
-		Nickname: pbAccount.Nickname,
+		Id:        int(pbAccount.Id),
+		Firstname: pbAccount.FirstName,
+		Lastname:  pbAccount.LastName,
+		Nickname:  pbAccount.Nickname,
+		Password:  pbAccount.Password,
+		Email:     pbAccount.Email,
+		Country:   pbAccount.Country,
+		CreatedAt: time.Time{},
+		UpdatedAt: time.Time{},
 	}
 }
