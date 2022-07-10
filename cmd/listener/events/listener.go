@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Listener will listen for account events
 type Listener interface {
 	Listen(ctx context.Context)
 }
@@ -16,6 +17,7 @@ func Listen(ctx context.Context, listeners ...Listener) {
 	}
 }
 
+// startConsumer will start rmq consumer
 func startConsumer(ctx context.Context, hub *rmq.Hub, event string) *rmq.Consumer {
 	conf := rmq.NewConfig()
 	conf.Exchange = "account"
@@ -31,6 +33,7 @@ func startConsumer(ctx context.Context, hub *rmq.Hub, event string) *rmq.Consume
 	return consumer
 }
 
+// handleMessages is default message handler, it will only log received messages
 func handleMessages(ctx context.Context, cons *rmq.Consumer, name string) {
 	logrus.Infof("%s started", name)
 
