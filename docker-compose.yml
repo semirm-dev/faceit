@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  user_account:
+    image: semirm/faceit-user:1
+    build:
+      context: .
+      dockerfile: cmd/user/Dockerfile
+    container_name: faceit_user
+    ports:
+      - "8001:8001"
+    networks:
+      - faceit
+  listener:
+    image: semirm/faceit-listener:1
+    build:
+      context: .
+      dockerfile: cmd/listener/Dockerfile
+    container_name: faceit_listener
+    ports:
+      - "8002:8002"
+    networks:
+      - faceit
+  gateway:
+    image: semirm/faceit-gateway:1
+    build:
+      context: .
+      dockerfile: cmd/gateway/Dockerfile
+    container_name: faceit_gateway
+    command:
+      - -account_uri=faceit_user:8001
+    ports:
+      - "8000:8000"
+    depends_on:
+      - user_account
+    networks:
+      - faceit
+networks:
+  faceit:

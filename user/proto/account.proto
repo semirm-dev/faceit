@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package product;
+
+option go_package = "github.com/semirm-dev/faceit/user/proto";
+
+service AccountManagement {
+  rpc AddAccount(AccountRequest) returns(AccountMessage) {};
+  rpc GetAccountsByFilter(GetAccountsByFilterRequest) returns(AccountsResponse) {};
+}
+
+message GetAccountsByFilterRequest {
+  int64 id = 1;
+  string nickname = 2;
+}
+
+message AccountsResponse {
+  repeated AccountMessage accounts = 1;
+}
+
+message AccountMessage {
+  int64 id = 1;
+  string nickname = 2;
+}
+
+message AccountRequest {
+  string nickname = 1;
+}
