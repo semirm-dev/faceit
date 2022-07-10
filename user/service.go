@@ -8,7 +8,6 @@ import (
 	pbUser "github.com/semirm-dev/faceit/user/proto"
 	"github.com/sirupsen/logrus"
 	grpcLib "google.golang.org/grpc"
-	"time"
 )
 
 const serviceName = "account management service"
@@ -166,7 +165,5 @@ func protoToUserAccount(pbAccount *pbUser.AccountMessage) *Account {
 		Password:  pbAccount.Password,
 		Email:     pbAccount.Email,
 		Country:   pbAccount.Country,
-		CreatedAt: time.Time{},
-		UpdatedAt: time.Time{},
 	}
 }
