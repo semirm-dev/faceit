@@ -22,15 +22,15 @@ type accountService struct {
 
 // Filter when querying data store for user accounts
 type Filter struct {
-	Id       int
+	Id       string
 	Nickname string
 }
 
 // AccountRepository communicates to data store with user accounts
 type AccountRepository interface {
 	AddAccount(ctx context.Context, account *Account) (*Account, error)
-	ModifyAccount(ctx context.Context, id int, account *Account) (*Account, error)
-	DeleteAccount(ctx context.Context, id int) error
+	ModifyAccount(ctx context.Context, id string, account *Account) (*Account, error)
+	DeleteAccount(ctx context.Context, id string) error
 	GetAccountsByFilter(ctx context.Context, filter *Filter) ([]*Account, error)
 }
 
@@ -62,7 +62,7 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 		return nil, err
 	}
 
-	go func(id int) {
+	go func(id string) {
 		if pubErr := svc.pub.Publish(event.AccountCreated, id); pubErr != nil {
 			logrus.Error(pubErr)
 		}
@@ -72,7 +72,7 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 }
 
 func (svc *accountService) ModifyAccount(ctx context.Context, req *pbUser.AccountMessage) (*pbUser.AccountMessage, error) {
-	account, err := svc.repo.ModifyAccount(ctx, int(req.Id), protoToUserAccount(req))
+	account, err := svc.repo.ModifyAccount(ctx, req.Id, protoToUserAccount(req))
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (svc *accountService) ModifyAccount(ctx context.Context, req *pbUser.Accoun
 		return nil, errors.New("account not found")
 	}
 
-	go func(id int) {
+	go func(id string) {
 		if pubErr := svc.pub.Publish(event.AccountModified, id); pubErr != nil {
 			logrus.Error(pubErr)
 		}
@@ -90,16 +90,16 @@ func (svc *accountService) ModifyAccount(ctx context.Context, req *pbUser.Accoun
 }
 
 func (svc *accountService) DeleteAccount(ctx context.Context, req *pbUser.DeleteAccountRequest) (*pbUser.DeleteAccountResponse, error) {
-	err := svc.repo.DeleteAccount(ctx, int(req.Id))
+	err := svc.repo.DeleteAccount(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	go func(id int) {
+	go func(id string) {
 		if pubErr := svc.pub.Publish(event.AccountDeleted, id); pubErr != nil {
 			logrus.Error(pubErr)
 		}
-	}(int(req.Id))
+	}(req.Id)
 
 	return &pbUser.DeleteAccountResponse{
 		Success: true,
@@ -109,7 +109,7 @@ func (svc *accountService) DeleteAccount(ctx context.Context, req *pbUser.Delete
 // GetAccountsByFilter will get user accounts based on given filters
 func (svc *accountService) GetAccountsByFilter(ctx context.Context, req *pbUser.GetAccountsByFilterRequest) (*pbUser.AccountsResponse, error) {
 	accounts, err := svc.repo.GetAccountsByFilter(ctx, &Filter{
-		Id:       int(req.Id),
+		Id:       req.Id,
 		Nickname: req.Nickname,
 	})
 	if err != nil {
@@ -133,7 +133,7 @@ func userAccountsToProto(accounts []*Account) []*pbUser.AccountMessage {
 
 func userAccountToProto(account *Account) *pbUser.AccountMessage {
 	return &pbUser.AccountMessage{
-		Id:        int64(account.Id),
+		Id:        account.Id,
 		FirstName: account.Firstname,
 		LastName:  account.Lastname,
 		Nickname:  account.Nickname,
@@ -158,7 +158,7 @@ func protoReqToUserAccount(pbAccount *pbUser.AccountRequest) *Account {
 
 func protoToUserAccount(pbAccount *pbUser.AccountMessage) *Account {
 	return &Account{
-		Id:        int(pbAccount.Id),
+		Id:        pbAccount.Id,
 		Firstname: pbAccount.FirstName,
 		Lastname:  pbAccount.LastName,
 		Nickname:  pbAccount.Nickname,

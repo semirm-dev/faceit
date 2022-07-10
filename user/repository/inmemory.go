@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/semirm-dev/faceit/user"
 	"time"
 )
@@ -15,7 +16,7 @@ func NewAccountInmemory() *inmemory {
 }
 
 func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*user.Account, error) {
-	account.Id = len(repo.accounts) + 1
+	account.Id = uuid.New().String()
 	account.CreatedAt = time.Now().UTC()
 	account.UpdatedAt = time.Now().UTC()
 
@@ -24,7 +25,7 @@ func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*u
 	return account, nil
 }
 
-func (repo *inmemory) ModifyAccount(ctx context.Context, id int, account *user.Account) (*user.Account, error) {
+func (repo *inmemory) ModifyAccount(ctx context.Context, id string, account *user.Account) (*user.Account, error) {
 	acc := repo.getById(id)
 	if acc != nil {
 		acc.Firstname = account.Firstname
@@ -38,7 +39,7 @@ func (repo *inmemory) ModifyAccount(ctx context.Context, id int, account *user.A
 	return acc, nil
 }
 
-func (repo *inmemory) DeleteAccount(ctx context.Context, id int) error {
+func (repo *inmemory) DeleteAccount(ctx context.Context, id string) error {
 	for i, acc := range repo.accounts {
 		if acc.Id == id {
 			copy(repo.accounts[i:], repo.accounts[i+1:])
@@ -54,7 +55,7 @@ func (repo *inmemory) DeleteAccount(ctx context.Context, id int) error {
 func (repo *inmemory) GetAccountsByFilter(ctx context.Context, filter *user.Filter) ([]*user.Account, error) {
 	var accounts []*user.Account
 
-	if filter.Id > 0 {
+	if filter.Id != "" {
 		acc := repo.getById(filter.Id)
 		if acc != nil {
 			accounts = append(accounts, acc)
@@ -68,14 +69,14 @@ func (repo *inmemory) GetAccountsByFilter(ctx context.Context, filter *user.Filt
 		}
 	}
 
-	if filter.Id == 0 && filter.Nickname == "" {
+	if filter.Id == "" && filter.Nickname == "" {
 		accounts = repo.accounts
 	}
 
 	return accounts, nil
 }
 
-func (repo *inmemory) getById(id int) *user.Account {
+func (repo *inmemory) getById(id string) *user.Account {
 	for _, acc := range repo.accounts {
 		if acc.Id == id {
 			return acc

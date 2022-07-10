@@ -5,7 +5,6 @@ import (
 	pbUser "github.com/semirm-dev/faceit/user/proto"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"strconv"
 )
 
 type CreateAccount struct {
@@ -55,22 +54,16 @@ func (api *api) CreateAccount() gin.HandlerFunc {
 func (api *api) ModifyAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
-		id, err := strconv.Atoi(idParam)
-		if err != nil {
-			logrus.Error(err)
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
 
 		var req *ModifyAccount
-		if err = c.ShouldBindJSON(&req); err != nil {
+		if err := c.ShouldBindJSON(&req); err != nil {
 			logrus.Error(err)
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
 		account, err := api.rpcClient.ModifyAccount(c.Request.Context(), &pbUser.AccountMessage{
-			Id:        int64(id),
+			Id:        idParam,
 			FirstName: req.Firstname,
 			LastName:  req.Lastname,
 			Nickname:  req.Nickname,
@@ -90,15 +83,9 @@ func (api *api) ModifyAccount() gin.HandlerFunc {
 func (api *api) DeleteAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
-		id, err := strconv.Atoi(idParam)
-		if err != nil {
-			logrus.Error(err)
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
 
 		resp, err := api.rpcClient.DeleteAccount(c.Request.Context(), &pbUser.DeleteAccountRequest{
-			Id: int64(id),
+			Id: idParam,
 		})
 		if err != nil {
 			logrus.Error(err)
@@ -112,15 +99,13 @@ func (api *api) DeleteAccount() gin.HandlerFunc {
 
 func (api *api) GetAccounts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var accId int
-		accIdParam, ok := c.GetQuery("id")
-		if ok {
-			id, _ := strconv.Atoi(accIdParam)
-			accId = id
+		idParam, ok := c.GetQuery("id")
+		if !ok {
+			idParam = ""
 		}
 
 		resp, err := api.rpcClient.GetAccountsByFilter(c.Request.Context(), &pbUser.GetAccountsByFilterRequest{
-			Id: int64(accId),
+			Id: idParam,
 		})
 		if err != nil {
 			logrus.Error(err)

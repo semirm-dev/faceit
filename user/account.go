@@ -3,7 +3,7 @@ package user
 import "time"
 
 type Account struct {
-	Id        int
+	Id        string
 	Firstname string
 	Lastname  string
 	Nickname  string
