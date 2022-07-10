@@ -7,18 +7,22 @@ services:
       context: .
       dockerfile: cmd/user/Dockerfile
     container_name: faceit_user
+    command:
+      - -rmq_host=faceit_rmq
     ports:
       - "8001:8001"
     networks:
       - faceit
-  listener:
+  account_listener:
     image: semirm/faceit-listener:1
     build:
       context: .
       dockerfile: cmd/listener/Dockerfile
-    container_name: faceit_listener
-    ports:
-      - "8002:8002"
+    container_name: faceit_account_listener
+    command:
+      - -rmq_host=faceit_rmq
+    depends_on:
+      - rmq
     networks:
       - faceit
   gateway:
@@ -33,6 +37,14 @@ services:
       - "8000:8000"
     depends_on:
       - user_account
+    networks:
+      - faceit
+  rmq:
+    image: rabbitmq:management
+    container_name: faceit_rmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - faceit
 networks:

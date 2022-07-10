@@ -2,25 +2,27 @@ package user
 
 import (
 	"context"
+	"github.com/semirm-dev/faceit/event"
 	"github.com/semirm-dev/faceit/internal/grpc"
 	pbUser "github.com/semirm-dev/faceit/user/proto"
+	"github.com/sirupsen/logrus"
 	grpcLib "google.golang.org/grpc"
 )
 
 const serviceName = "account management service"
-
-func NewAccountService(addr string, repo AccountRepository) *accountService {
-	return &accountService{
-		addr: addr,
-		repo: repo,
-	}
-}
 
 // accountService will expose account management service via grpc
 type accountService struct {
 	pbUser.UnimplementedAccountManagementServer
 	addr string
 	repo AccountRepository
+	pub  AccountPublisher
+}
+
+// Filter for user accounts from data store
+type Filter struct {
+	Id       int
+	Nickname string
 }
 
 // AccountRepository communicates to data store with user accounts
@@ -29,10 +31,17 @@ type AccountRepository interface {
 	GetAccountsByFilter(ctx context.Context, filter *Filter) ([]*Account, error)
 }
 
-// Filter for user accounts from data store
-type Filter struct {
-	Id       int
-	Nickname string
+// AccountPublisher will publish event that corresponds to an account action
+type AccountPublisher interface {
+	Publish(event string, msg interface{}) error
+}
+
+func NewAccountService(addr string, repo AccountRepository, pub AccountPublisher) *accountService {
+	return &accountService{
+		addr: addr,
+		repo: repo,
+		pub:  pub,
+	}
 }
 
 func (svc *accountService) ListenForConnections(ctx context.Context) {
@@ -49,6 +58,12 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 	if err != nil {
 		return nil, err
 	}
+
+	go func(id int) {
+		if pubErr := svc.pub.Publish(event.AccountCreated, id); pubErr != nil {
+			logrus.Error(pubErr)
+		}
+	}(account.Id)
 
 	return userAccountToProto(account), nil
 }
