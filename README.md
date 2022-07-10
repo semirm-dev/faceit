@@ -1,4 +1,4 @@
-**Run **
+**Run**
 * Please run RabbitMQ so services can have ready connection
 ```shell
 docker-compose up rmq
