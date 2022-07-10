@@ -1,4 +1,4 @@
-package account
+package events
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func StartConsumer(ctx context.Context, hub *rmq.Hub, event string) *rmq.Consumer {
+func startConsumer(ctx context.Context, hub *rmq.Hub, event string) *rmq.Consumer {
 	conf := rmq.NewConfig()
 	conf.Exchange = "account"
 	conf.Queue = event
@@ -21,7 +21,7 @@ func StartConsumer(ctx context.Context, hub *rmq.Hub, event string) *rmq.Consume
 	return consumer
 }
 
-func HandleMessages(ctx context.Context, cons *rmq.Consumer, name string) {
+func handleMessages(ctx context.Context, cons *rmq.Consumer, name string) {
 	logrus.Infof("%s started", name)
 
 	defer logrus.Warnf("%s closed", name)

@@ -4,8 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/gobackpack/rmq"
-	"github.com/semirm-dev/faceit/cmd/listener/account"
-	"github.com/semirm-dev/faceit/event"
+	"github.com/semirm-dev/faceit/cmd/listener/events"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
@@ -30,14 +29,14 @@ func main() {
 	}
 
 	// create listeners for different account actions/events
-	accountCreatedConsumer := account.StartConsumer(hubCtx, hub, event.AccountCreated)
-	accountModifiedConsumer := account.StartConsumer(hubCtx, hub, event.AccountModified)
-	accountDeletedConsumer := account.StartConsumer(hubCtx, hub, event.AccountDeleted)
+	accountCreated := events.NewAccountCreatedListener(hub)
+	accountCreated.Listen(hubCtx)
 
-	// handle messages
-	go account.HandleMessages(hubCtx, accountCreatedConsumer, event.AccountCreated)
-	go account.HandleMessages(hubCtx, accountModifiedConsumer, event.AccountModified)
-	go account.HandleMessages(hubCtx, accountDeletedConsumer, event.AccountDeleted)
+	accountModified := events.NewAccountModifiedListener(hub)
+	accountModified.Listen(hubCtx)
+
+	accountDeleted := events.NewAccountDeletedListener(hub)
+	accountDeleted.Listen(hubCtx)
 
 	logrus.Info("listening for messages...")
 
