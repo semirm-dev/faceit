@@ -119,7 +119,7 @@ func (api *api) GetAccounts() gin.HandlerFunc {
 			accId = id
 		}
 
-		accounts, err := api.rpcClient.GetAccountsByFilter(c.Request.Context(), &pbUser.GetAccountsByFilterRequest{
+		resp, err := api.rpcClient.GetAccountsByFilter(c.Request.Context(), &pbUser.GetAccountsByFilterRequest{
 			Id: int64(accId),
 		})
 		if err != nil {
@@ -128,6 +128,6 @@ func (api *api) GetAccounts() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, accounts)
+		c.JSON(http.StatusOK, resp.Accounts)
 	}
 }
