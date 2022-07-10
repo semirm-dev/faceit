@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"github.com/semirm-dev/faceit/user"
-	"sort"
 )
 
 type inmemory struct {
@@ -15,10 +14,6 @@ func NewAccountInmemory() *inmemory {
 }
 
 func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*user.Account, error) {
-	sort.Slice(repo.accounts, func(i, j int) bool {
-		return repo.accounts[i].Id > repo.accounts[j].Id
-	})
-
 	account.Id = len(repo.accounts) + 1
 
 	repo.accounts = append(repo.accounts, account)

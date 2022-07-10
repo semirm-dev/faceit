@@ -19,7 +19,7 @@ type accountService struct {
 	pub  AccountPublisher
 }
 
-// Filter for user accounts from data store
+// Filter when querying data store for user accounts
 type Filter struct {
 	Id       int
 	Nickname string
