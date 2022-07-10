@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"github.com/semirm-dev/faceit/event"
 	"github.com/semirm-dev/faceit/internal/grpc"
 	pbUser "github.com/semirm-dev/faceit/user/proto"
@@ -74,6 +75,9 @@ func (svc *accountService) ModifyAccount(ctx context.Context, req *pbUser.Accoun
 	account, err := svc.repo.ModifyAccount(ctx, int(req.Id), protoToUserAccount(req))
 	if err != nil {
 		return nil, err
+	}
+	if account == nil {
+		return nil, errors.New("account not found")
 	}
 
 	go func(id int) {

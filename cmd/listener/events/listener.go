@@ -6,6 +6,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Listener interface {
+	Listen(ctx context.Context)
+}
+
+func Listen(ctx context.Context, listeners ...Listener) {
+	for _, listener := range listeners {
+		listener.Listen(ctx)
+	}
+}
+
 func startConsumer(ctx context.Context, hub *rmq.Hub, event string) *rmq.Consumer {
 	conf := rmq.NewConfig()
 	conf.Exchange = "account"
