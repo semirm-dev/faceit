@@ -42,16 +42,16 @@ func (pub *accountPublisher) Publish(event string, msg interface{}) error {
 }
 
 func (pub *accountPublisher) setupQueues(ctx context.Context, events []string) {
-	for _, event := range events {
+	for _, ev := range events {
 		conf := rmq.NewConfig()
 		conf.Exchange = "account"
-		conf.Queue = event
-		conf.RoutingKey = event
+		conf.Queue = ev
+		conf.RoutingKey = ev
 
 		if err := pub.hub.CreateQueue(conf); err != nil {
 			logrus.Fatal(err)
 		}
 
-		pub.conf[event] = pub.hub.CreatePublisher(ctx, conf)
+		pub.conf[ev] = pub.hub.CreatePublisher(ctx, conf)
 	}
 }
