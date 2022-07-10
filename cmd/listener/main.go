@@ -55,8 +55,8 @@ func main() {
 	accountModifiedConsumer := hub.StartConsumer(hubCtx, confAccountModified)
 
 	// handle messages
-	go handleConsumerMessages(hubCtx, accountCreatedConsumer, "account_created")
-	go handleConsumerMessages(hubCtx, accountModifiedConsumer, "account_modified")
+	go handleConsumerMessages(hubCtx, accountCreatedConsumer, event.AccountCreated)
+	go handleConsumerMessages(hubCtx, accountModifiedConsumer, event.AccountModified)
 
 	logrus.Info("listening for messages...")
 
