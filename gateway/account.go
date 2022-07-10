@@ -12,6 +12,10 @@ type CreateAccount struct {
 	Nickname string
 }
 
+type ModifyAccount struct {
+	Nickname string
+}
+
 func (api *api) CreateAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req *CreateAccount
@@ -31,6 +35,60 @@ func (api *api) CreateAccount() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, account)
+	}
+}
+
+func (api *api) ModifyAccount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+		id, err := strconv.Atoi(idParam)
+		if err != nil {
+			logrus.Error(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		var req *ModifyAccount
+		if err = c.ShouldBindJSON(&req); err != nil {
+			logrus.Error(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		account, err := api.rpcClient.ModifyAccount(c.Request.Context(), &pbUser.AccountMessage{
+			Id:       int64(id),
+			Nickname: req.Nickname,
+		})
+		if err != nil {
+			logrus.Error(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		c.JSON(http.StatusOK, account)
+	}
+}
+
+func (api *api) DeleteAccount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+		id, err := strconv.Atoi(idParam)
+		if err != nil {
+			logrus.Error(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		resp, err := api.rpcClient.DeleteAccount(c.Request.Context(), &pbUser.DeleteAccountRequest{
+			Id: int64(id),
+		})
+		if err != nil {
+			logrus.Error(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		c.JSON(http.StatusOK, resp)
 	}
 }
 

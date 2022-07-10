@@ -31,7 +31,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	// setup
+	// created
 	confAccountCreated := rmq.NewConfig()
 	confAccountCreated.Exchange = "account"
 	confAccountCreated.Queue = event.AccountCreated
@@ -41,6 +41,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 
+	// modified
 	confAccountModified := rmq.NewConfig()
 	confAccountModified.Exchange = "account"
 	confAccountModified.Queue = event.AccountModified
@@ -50,13 +51,25 @@ func main() {
 		logrus.Fatal(err)
 	}
 
+	// deleted
+	confAccountDeleted := rmq.NewConfig()
+	confAccountDeleted.Exchange = "account"
+	confAccountDeleted.Queue = event.AccountDeleted
+	confAccountDeleted.RoutingKey = event.AccountDeleted
+
+	if err = hub.CreateQueue(confAccountDeleted); err != nil {
+		logrus.Fatal(err)
+	}
+
 	// start consumers
 	accountCreatedConsumer := hub.StartConsumer(hubCtx, confAccountCreated)
 	accountModifiedConsumer := hub.StartConsumer(hubCtx, confAccountModified)
+	accountDeletedConsumer := hub.StartConsumer(hubCtx, confAccountDeleted)
 
 	// handle messages
 	go handleConsumerMessages(hubCtx, accountCreatedConsumer, event.AccountCreated)
 	go handleConsumerMessages(hubCtx, accountModifiedConsumer, event.AccountModified)
+	go handleConsumerMessages(hubCtx, accountDeletedConsumer, event.AccountDeleted)
 
 	logrus.Info("listening for messages...")
 

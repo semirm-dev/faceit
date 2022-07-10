@@ -23,6 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountManagementClient interface {
 	AddAccount(ctx context.Context, in *AccountRequest, opts ...grpc.CallOption) (*AccountMessage, error)
+	ModifyAccount(ctx context.Context, in *AccountMessage, opts ...grpc.CallOption) (*AccountMessage, error)
+	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
 	GetAccountsByFilter(ctx context.Context, in *GetAccountsByFilterRequest, opts ...grpc.CallOption) (*AccountsResponse, error)
 }
 
@@ -43,6 +45,24 @@ func (c *accountManagementClient) AddAccount(ctx context.Context, in *AccountReq
 	return out, nil
 }
 
+func (c *accountManagementClient) ModifyAccount(ctx context.Context, in *AccountMessage, opts ...grpc.CallOption) (*AccountMessage, error) {
+	out := new(AccountMessage)
+	err := c.cc.Invoke(ctx, "/product.AccountManagement/ModifyAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountManagementClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
+	out := new(DeleteAccountResponse)
+	err := c.cc.Invoke(ctx, "/product.AccountManagement/DeleteAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accountManagementClient) GetAccountsByFilter(ctx context.Context, in *GetAccountsByFilterRequest, opts ...grpc.CallOption) (*AccountsResponse, error) {
 	out := new(AccountsResponse)
 	err := c.cc.Invoke(ctx, "/product.AccountManagement/GetAccountsByFilter", in, out, opts...)
@@ -57,6 +77,8 @@ func (c *accountManagementClient) GetAccountsByFilter(ctx context.Context, in *G
 // for forward compatibility
 type AccountManagementServer interface {
 	AddAccount(context.Context, *AccountRequest) (*AccountMessage, error)
+	ModifyAccount(context.Context, *AccountMessage) (*AccountMessage, error)
+	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
 	GetAccountsByFilter(context.Context, *GetAccountsByFilterRequest) (*AccountsResponse, error)
 	mustEmbedUnimplementedAccountManagementServer()
 }
@@ -67,6 +89,12 @@ type UnimplementedAccountManagementServer struct {
 
 func (UnimplementedAccountManagementServer) AddAccount(context.Context, *AccountRequest) (*AccountMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddAccount not implemented")
+}
+func (UnimplementedAccountManagementServer) ModifyAccount(context.Context, *AccountMessage) (*AccountMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ModifyAccount not implemented")
+}
+func (UnimplementedAccountManagementServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
 }
 func (UnimplementedAccountManagementServer) GetAccountsByFilter(context.Context, *GetAccountsByFilterRequest) (*AccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccountsByFilter not implemented")
@@ -102,6 +130,42 @@ func _AccountManagement_AddAccount_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountManagement_ModifyAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AccountMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountManagementServer).ModifyAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/product.AccountManagement/ModifyAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountManagementServer).ModifyAccount(ctx, req.(*AccountMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountManagement_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountManagementServer).DeleteAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/product.AccountManagement/DeleteAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountManagementServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AccountManagement_GetAccountsByFilter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAccountsByFilterRequest)
 	if err := dec(in); err != nil {
@@ -130,6 +194,14 @@ var AccountManagement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddAccount",
 			Handler:    _AccountManagement_AddAccount_Handler,
+		},
+		{
+			MethodName: "ModifyAccount",
+			Handler:    _AccountManagement_ModifyAccount_Handler,
+		},
+		{
+			MethodName: "DeleteAccount",
+			Handler:    _AccountManagement_DeleteAccount_Handler,
 		},
 		{
 			MethodName: "GetAccountsByFilter",

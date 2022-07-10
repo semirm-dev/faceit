@@ -19,6 +19,8 @@ func main() {
 	accApi := gateway.NewApi(*accountAddr)
 
 	router.POST("users", accApi.CreateAccount())
+	router.PUT("users/:id", accApi.ModifyAccount())
+	router.DELETE("users/:id", accApi.DeleteAccount())
 	router.GET("users", accApi.GetAccounts())
 
 	web.ServeHttp(*httpAddr, "gateway", router)

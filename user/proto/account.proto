@@ -6,6 +6,8 @@ option go_package = "github.com/semirm-dev/faceit/user/proto";
 
 service AccountManagement {
   rpc AddAccount(AccountRequest) returns(AccountMessage) {};
+  rpc ModifyAccount(AccountMessage) returns(AccountMessage) {};
+  rpc DeleteAccount(DeleteAccountRequest) returns(DeleteAccountResponse) {};
   rpc GetAccountsByFilter(GetAccountsByFilterRequest) returns(AccountsResponse) {};
 }
 
@@ -25,4 +27,12 @@ message AccountMessage {
 
 message AccountRequest {
   string nickname = 1;
+}
+
+message DeleteAccountRequest {
+  int64 id = 1;
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
 }

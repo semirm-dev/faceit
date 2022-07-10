@@ -28,6 +28,8 @@ type Filter struct {
 // AccountRepository communicates to data store with user accounts
 type AccountRepository interface {
 	AddAccount(ctx context.Context, account *Account) (*Account, error)
+	ModifyAccount(ctx context.Context, id int, account *Account) (*Account, error)
+	DeleteAccount(ctx context.Context, id int) error
 	GetAccountsByFilter(ctx context.Context, filter *Filter) ([]*Account, error)
 }
 
@@ -68,6 +70,38 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 	return userAccountToProto(account), nil
 }
 
+func (svc *accountService) ModifyAccount(ctx context.Context, req *pbUser.AccountMessage) (*pbUser.AccountMessage, error) {
+	account, err := svc.repo.ModifyAccount(ctx, int(req.Id), protoToUserAccount(req))
+	if err != nil {
+		return nil, err
+	}
+
+	go func(id int) {
+		if pubErr := svc.pub.Publish(event.AccountModified, id); pubErr != nil {
+			logrus.Error(pubErr)
+		}
+	}(account.Id)
+
+	return userAccountToProto(account), nil
+}
+
+func (svc *accountService) DeleteAccount(ctx context.Context, req *pbUser.DeleteAccountRequest) (*pbUser.DeleteAccountResponse, error) {
+	err := svc.repo.DeleteAccount(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+
+	go func(id int) {
+		if pubErr := svc.pub.Publish(event.AccountDeleted, id); pubErr != nil {
+			logrus.Error(pubErr)
+		}
+	}(int(req.Id))
+
+	return &pbUser.DeleteAccountResponse{
+		Success: true,
+	}, nil
+}
+
 // GetAccountsByFilter will get user accounts based on given filters
 func (svc *accountService) GetAccountsByFilter(ctx context.Context, req *pbUser.GetAccountsByFilterRequest) (*pbUser.AccountsResponse, error) {
 	accounts, err := svc.repo.GetAccountsByFilter(ctx, &Filter{
@@ -102,6 +136,13 @@ func userAccountToProto(account *Account) *pbUser.AccountMessage {
 
 func protoReqToUserAccount(pbAccount *pbUser.AccountRequest) *Account {
 	return &Account{
+		Nickname: pbAccount.Nickname,
+	}
+}
+
+func protoToUserAccount(pbAccount *pbUser.AccountMessage) *Account {
+	return &Account{
+		Id:       int(pbAccount.Id),
 		Nickname: pbAccount.Nickname,
 	}
 }
