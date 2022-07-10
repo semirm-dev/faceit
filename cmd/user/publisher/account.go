@@ -20,7 +20,7 @@ func NewAccountPublisher(ctx context.Context, hub *rmq.Hub) *accountPublisher {
 		conf: make(map[string]*rmq.Publisher),
 	}
 
-	pub.setupQueues(ctx, []string{event.AccountCreated, event.AccountModified, event.AccountDeleted})
+	pub.setupEvents(ctx, []string{event.AccountCreated, event.AccountModified, event.AccountDeleted})
 
 	return pub
 }
@@ -41,7 +41,7 @@ func (pub *accountPublisher) Publish(event string, msg interface{}) error {
 	return nil
 }
 
-func (pub *accountPublisher) setupQueues(ctx context.Context, events []string) {
+func (pub *accountPublisher) setupEvents(ctx context.Context, events []string) {
 	for _, ev := range events {
 		conf := rmq.NewConfig()
 		conf.Exchange = "account"
