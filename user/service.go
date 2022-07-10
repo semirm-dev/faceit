@@ -7,7 +7,7 @@ import (
 	grpcLib "google.golang.org/grpc"
 )
 
-const serviceName = "user account management service"
+const serviceName = "account management service"
 
 func NewAccountService(addr string, repo AccountRepository) *accountService {
 	return &accountService{
@@ -16,20 +16,20 @@ func NewAccountService(addr string, repo AccountRepository) *accountService {
 	}
 }
 
-// accountService will expose user account management service via grpc
+// accountService will expose account management service via grpc
 type accountService struct {
 	pbUser.UnimplementedAccountManagementServer
 	addr string
 	repo AccountRepository
 }
 
-// AccountRepository communicates to data store with users accounts
+// AccountRepository communicates to data store with user accounts
 type AccountRepository interface {
 	AddAccount(ctx context.Context, account *Account) (*Account, error)
 	GetAccountsByFilter(ctx context.Context, filter *Filter) ([]*Account, error)
 }
 
-// Filter for user accounts retrieval from data store
+// Filter for user accounts from data store
 type Filter struct {
 	Id       int
 	Nickname string
@@ -53,7 +53,7 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 	return userAccountToProto(account), nil
 }
 
-// GetAccountsByFilter will user accounts based on given filters
+// GetAccountsByFilter will get user accounts based on given filters
 func (svc *accountService) GetAccountsByFilter(ctx context.Context, req *pbUser.GetAccountsByFilterRequest) (*pbUser.AccountsResponse, error) {
 	accounts, err := svc.repo.GetAccountsByFilter(ctx, &Filter{
 		Id:       int(req.Id),

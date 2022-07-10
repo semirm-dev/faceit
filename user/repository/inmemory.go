@@ -18,7 +18,7 @@ func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*u
 	sort.Slice(repo.accounts, func(i, j int) bool {
 		return repo.accounts[i].Id > repo.accounts[j].Id
 	})
-	
+
 	account.Id = len(repo.accounts) + 1
 
 	repo.accounts = append(repo.accounts, account)
