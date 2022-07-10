@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"github.com/gobackpack/crypto"
 	"github.com/semirm-dev/faceit/event"
 	"github.com/semirm-dev/faceit/internal/grpc"
 	pbUser "github.com/semirm-dev/faceit/user/proto"
@@ -57,6 +58,14 @@ func (svc *accountService) RegisterGrpcServer(server *grpcLib.Server) {
 
 // AddAccount will add new user account
 func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRequest) (*pbUser.AccountMessage, error) {
+	argon2 := crypto.NewArgon2()
+	hashed, err := argon2.Hash(req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Password = hashed
+
 	account, err := svc.repo.AddAccount(ctx, protoReqToUserAccount(req))
 	if err != nil {
 		return nil, err
