@@ -31,7 +31,9 @@ type Filter struct {
 type AccountRepository interface {
 	AddAccount(ctx context.Context, account *Account) (*Account, error)
 	ModifyAccount(ctx context.Context, id string, account *Account) (*Account, error)
+	ChangePassword(ctx context.Context, id, newPassword string) error
 	DeleteAccount(ctx context.Context, id string) error
+	GetById(ctx context.Context, id string) (*Account, error)
 	GetAccountsByFilter(ctx context.Context, filter *Filter) ([]*Account, error)
 }
 
@@ -96,6 +98,40 @@ func (svc *accountService) ModifyAccount(ctx context.Context, req *pbUser.Accoun
 	}(account.Id)
 
 	return userAccountToProto(account), nil
+}
+
+func (svc *accountService) ChangePassword(ctx context.Context, req *pbUser.ChangePasswordRequest) (*pbUser.ChangePasswordResponse, error) {
+	account, err := svc.repo.GetById(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if account == nil {
+		return nil, errors.New("account not found")
+	}
+
+	argon2 := crypto.NewArgon2()
+	if !argon2.Validate(account.Password, req.OldPassword) {
+		return nil, errors.New("invalid credentials")
+	}
+
+	hashed, err := argon2.Hash(req.NewPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := svc.repo.ChangePassword(ctx, req.Id, hashed); err != nil {
+		return nil, err
+	}
+
+	go func(id string) {
+		if pubErr := svc.pub.Publish(event.AccountModified, id); pubErr != nil {
+			logrus.Error(pubErr)
+		}
+	}(account.Id)
+
+	return &pbUser.ChangePasswordResponse{
+		Success: true,
+	}, nil
 }
 
 func (svc *accountService) DeleteAccount(ctx context.Context, req *pbUser.DeleteAccountRequest) (*pbUser.DeleteAccountResponse, error) {

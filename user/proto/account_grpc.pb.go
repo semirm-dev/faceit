@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AccountManagementClient interface {
 	AddAccount(ctx context.Context, in *AccountRequest, opts ...grpc.CallOption) (*AccountMessage, error)
 	ModifyAccount(ctx context.Context, in *AccountMessage, opts ...grpc.CallOption) (*AccountMessage, error)
+	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
 	GetAccountsByFilter(ctx context.Context, in *GetAccountsByFilterRequest, opts ...grpc.CallOption) (*AccountsResponse, error)
 }
@@ -54,6 +55,15 @@ func (c *accountManagementClient) ModifyAccount(ctx context.Context, in *Account
 	return out, nil
 }
 
+func (c *accountManagementClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error) {
+	out := new(ChangePasswordResponse)
+	err := c.cc.Invoke(ctx, "/product.AccountManagement/ChangePassword", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accountManagementClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
 	out := new(DeleteAccountResponse)
 	err := c.cc.Invoke(ctx, "/product.AccountManagement/DeleteAccount", in, out, opts...)
@@ -78,6 +88,7 @@ func (c *accountManagementClient) GetAccountsByFilter(ctx context.Context, in *G
 type AccountManagementServer interface {
 	AddAccount(context.Context, *AccountRequest) (*AccountMessage, error)
 	ModifyAccount(context.Context, *AccountMessage) (*AccountMessage, error)
+	ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
 	GetAccountsByFilter(context.Context, *GetAccountsByFilterRequest) (*AccountsResponse, error)
 	mustEmbedUnimplementedAccountManagementServer()
@@ -92,6 +103,9 @@ func (UnimplementedAccountManagementServer) AddAccount(context.Context, *Account
 }
 func (UnimplementedAccountManagementServer) ModifyAccount(context.Context, *AccountMessage) (*AccountMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ModifyAccount not implemented")
+}
+func (UnimplementedAccountManagementServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
 }
 func (UnimplementedAccountManagementServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
@@ -148,6 +162,24 @@ func _AccountManagement_ModifyAccount_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountManagement_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountManagementServer).ChangePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/product.AccountManagement/ChangePassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountManagementServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AccountManagement_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteAccountRequest)
 	if err := dec(in); err != nil {
@@ -198,6 +230,10 @@ var AccountManagement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ModifyAccount",
 			Handler:    _AccountManagement_ModifyAccount_Handler,
+		},
+		{
+			MethodName: "ChangePassword",
+			Handler:    _AccountManagement_ChangePassword_Handler,
 		},
 		{
 			MethodName: "DeleteAccount",

@@ -24,6 +24,11 @@ type ModifyAccount struct {
 	Country   string `json:"country"`
 }
 
+type ChangePassword struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
 func (api *api) CreateAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req *CreateAccount
@@ -77,6 +82,32 @@ func (api *api) ModifyAccount() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, account)
+	}
+}
+
+func (api *api) ChangePassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+
+		var req *ChangePassword
+		if err := c.ShouldBindJSON(&req); err != nil {
+			logrus.Error(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		resp, err := api.rpcClient.ChangePassword(c.Request.Context(), &pbUser.ChangePasswordRequest{
+			Id:          idParam,
+			OldPassword: req.OldPassword,
+			NewPassword: req.NewPassword,
+		})
+		if err != nil {
+			logrus.Error(err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		c.JSON(http.StatusOK, resp)
 	}
 }
 

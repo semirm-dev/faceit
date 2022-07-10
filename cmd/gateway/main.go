@@ -20,6 +20,7 @@ func main() {
 
 	router.POST("users", api.CreateAccount())
 	router.PUT("users/:id", api.ModifyAccount())
+	router.PUT("users/:id/password", api.ChangePassword())
 	router.DELETE("users/:id", api.DeleteAccount())
 	router.GET("users", api.GetAccounts())
 

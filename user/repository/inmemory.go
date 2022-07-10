@@ -39,6 +39,16 @@ func (repo *inmemory) ModifyAccount(ctx context.Context, id string, account *use
 	return acc, nil
 }
 
+func (repo *inmemory) ChangePassword(ctx context.Context, id, password string) error {
+	acc := repo.getById(id)
+	if acc != nil {
+		acc.Password = password
+		acc.UpdatedAt = time.Now().UTC()
+	}
+
+	return nil
+}
+
 func (repo *inmemory) DeleteAccount(ctx context.Context, id string) error {
 	for i, acc := range repo.accounts {
 		if acc.Id == id {
@@ -74,6 +84,10 @@ func (repo *inmemory) GetAccountsByFilter(ctx context.Context, filter *user.Filt
 	}
 
 	return accounts, nil
+}
+
+func (repo *inmemory) GetById(ctx context.Context, id string) (*user.Account, error) {
+	return repo.getById(id), nil
 }
 
 func (repo *inmemory) getById(id string) *user.Account {
