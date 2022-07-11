@@ -29,9 +29,7 @@ func startConsumer(ctx context.Context, hub *rmq.Hub, event string) *rmq.Consume
 		logrus.Fatal(err)
 	}
 
-	consumer := hub.StartConsumer(ctx, conf)
-
-	return consumer
+	return hub.StartConsumer(ctx, conf)
 }
 
 // handleMessages is default message handler, it will only log received messages
