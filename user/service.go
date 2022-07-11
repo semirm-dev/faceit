@@ -34,6 +34,7 @@ type AccountRepository interface {
 	ChangePassword(ctx context.Context, id, newPassword string) error
 	DeleteAccount(ctx context.Context, id string) error
 	GetById(ctx context.Context, id string) (*Account, error)
+	GetByEmail(ctx context.Context, email string) (*Account, error)
 	GetAccountsByFilter(ctx context.Context, filter *Filter) ([]*Account, error)
 }
 
@@ -60,6 +61,15 @@ func (svc *accountService) RegisterGrpcServer(server *grpcLib.Server) {
 
 // AddAccount will add new user account
 func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRequest) (*pbUser.AccountMessage, error) {
+	existing, err := svc.repo.GetByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	if existing.Email == req.Email {
+		return nil, errors.New("email already exists")
+	}
+
 	argon2 := crypto.NewArgon2()
 	hashed, err := argon2.Hash(req.Password)
 	if err != nil {
@@ -83,12 +93,17 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 }
 
 func (svc *accountService) ModifyAccount(ctx context.Context, req *pbUser.AccountMessage) (*pbUser.AccountMessage, error) {
-	account, err := svc.repo.ModifyAccount(ctx, req.Id, protoToUserAccount(req))
+	existing, err := svc.repo.GetById(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	if account == nil {
+	if existing == nil || existing.Email == "" {
 		return nil, errors.New("account not found")
+	}
+
+	account, err := svc.repo.ModifyAccount(ctx, req.Id, protoToUserAccount(req))
+	if err != nil {
+		return nil, err
 	}
 
 	go func(id string) {
@@ -105,7 +120,7 @@ func (svc *accountService) ChangePassword(ctx context.Context, req *pbUser.Chang
 	if err != nil {
 		return nil, err
 	}
-	if account == nil {
+	if account == nil || account.Email == "" {
 		return nil, errors.New("account not found")
 	}
 

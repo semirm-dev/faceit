@@ -70,9 +70,23 @@ func (repo *inmemory) GetById(ctx context.Context, id string) (*user.Account, er
 	return repo.getById(id), nil
 }
 
+func (repo *inmemory) GetByEmail(ctx context.Context, email string) (*user.Account, error) {
+	return repo.getByEmail(email), nil
+}
+
 func (repo *inmemory) getById(id string) *user.Account {
 	for _, acc := range repo.accounts {
 		if acc.Id == id {
+			return acc
+		}
+	}
+
+	return nil
+}
+
+func (repo *inmemory) getByEmail(email string) *user.Account {
+	for _, acc := range repo.accounts {
+		if acc.Email == email {
 			return acc
 		}
 	}

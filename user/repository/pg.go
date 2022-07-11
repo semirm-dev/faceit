@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/semirm-dev/faceit/internal/db"
 	"github.com/semirm-dev/faceit/user"
@@ -38,10 +36,6 @@ func NewPgDb(db *gorm.DB) *pgDb {
 }
 
 func (repo *pgDb) AddAccount(ctx context.Context, account *user.Account) (*user.Account, error) {
-	if emailExists(account.Email, repo.db) {
-		return nil, errors.New(fmt.Sprintf("email already exists"))
-	}
-
 	acc := accountToEntity(account)
 	acc.Id = uuid.New()
 
@@ -61,18 +55,10 @@ func (repo *pgDb) ModifyAccount(ctx context.Context, id string, account *user.Ac
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return nil, err
 	}
-	if acc.Email == "" {
-		return nil, errors.New("account not found")
-	}
-
-	if acc.Email != account.Email && emailExists(account.Email, repo.db) {
-		return nil, errors.New(fmt.Sprintf("email already exists"))
-	}
 
 	acc.Firstname = account.Firstname
 	acc.Lastname = account.Lastname
 	acc.Nickname = account.Nickname
-	acc.Email = account.Email
 	acc.Country = account.Country
 
 	if err := repo.db.Save(&acc).Error; err != nil {
@@ -87,16 +73,10 @@ func (repo *pgDb) ChangePassword(ctx context.Context, id, password string) error
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return err
 	}
-	if acc.Email == "" {
-		return errors.New("account not found")
-	}
 
 	acc.Password = password
-	if err := repo.db.Save(&acc).Error; err != nil {
-		return err
-	}
 
-	return nil
+	return repo.db.Save(&acc).Error
 }
 
 func (repo *pgDb) DeleteAccount(ctx context.Context, id string) error {
@@ -104,15 +84,8 @@ func (repo *pgDb) DeleteAccount(ctx context.Context, id string) error {
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return err
 	}
-	if acc.Email == "" {
-		return errors.New("account not found")
-	}
 
-	if err := repo.db.Delete(acc).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return repo.db.Delete(acc).Error
 }
 
 func (repo *pgDb) GetAccountsByFilter(ctx context.Context, filter *user.Filter) ([]*user.Account, error) {
@@ -131,10 +104,14 @@ func (repo *pgDb) GetById(ctx context.Context, id string) (*user.Account, error)
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return nil, err
 	}
-	if acc.Email == "" {
-		return nil, errors.New("account not found")
-	}
+	return entityToAccount(acc), nil
+}
 
+func (repo *pgDb) GetByEmail(ctx context.Context, email string) (*user.Account, error) {
+	var acc *Account
+	if err := repo.db.Where("email = ?", email).Find(&acc).Error; err != nil {
+		return nil, err
+	}
 	return entityToAccount(acc), nil
 }
 
