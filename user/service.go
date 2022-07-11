@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"errors"
-	"github.com/gobackpack/crypto"
 	"github.com/semirm-dev/faceit/event"
 	"github.com/semirm-dev/faceit/internal/grpc"
 	pbUser "github.com/semirm-dev/faceit/user/proto"
@@ -16,9 +15,10 @@ const serviceName = "account management service"
 // accountService will expose account management service via grpc
 type accountService struct {
 	pbUser.UnimplementedAccountManagementServer
-	addr string
-	repo AccountRepository
-	pub  AccountPublisher
+	addr    string
+	repo    AccountRepository
+	pub     AccountPublisher
+	pwdHash PasswordHash
 }
 
 // Filter when querying data store for user accounts
@@ -44,11 +44,17 @@ type AccountPublisher interface {
 	Publish(event string, msg interface{}) error
 }
 
-func NewAccountService(addr string, repo AccountRepository, pub AccountPublisher) *accountService {
+type PasswordHash interface {
+	Hash(plain string) (string, error)
+	Validate(hashed, plain string) bool
+}
+
+func NewAccountService(addr string, repo AccountRepository, pub AccountPublisher, pwdHash PasswordHash) *accountService {
 	return &accountService{
-		addr: addr,
-		repo: repo,
-		pub:  pub,
+		addr:    addr,
+		repo:    repo,
+		pub:     pub,
+		pwdHash: pwdHash,
 	}
 }
 
@@ -71,8 +77,7 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 		return nil, errors.New("email already exists")
 	}
 
-	argon2 := crypto.NewArgon2()
-	hashed, err := argon2.Hash(req.Password)
+	hashed, err := svc.pwdHash.Hash(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -125,12 +130,11 @@ func (svc *accountService) ChangePassword(ctx context.Context, req *pbUser.Chang
 		return nil, errors.New("account not found")
 	}
 
-	argon2 := crypto.NewArgon2()
-	if !argon2.Validate(account.Password, req.OldPassword) {
+	if !svc.pwdHash.Validate(account.Password, req.OldPassword) {
 		return nil, errors.New("invalid credentials")
 	}
 
-	hashed, err := argon2.Hash(req.NewPassword)
+	hashed, err := svc.pwdHash.Hash(req.NewPassword)
 	if err != nil {
 		return nil, err
 	}

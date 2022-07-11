@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/gobackpack/crypto"
 	"github.com/gobackpack/rmq"
 	"github.com/semirm-dev/faceit/cmd/user/publisher"
 	"github.com/semirm-dev/faceit/internal/db"
@@ -34,7 +35,11 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	svc := user.NewAccountService(*addr, repository.NewPgDb(db.PostgresDb(*connString)), publisher.NewAccountPublisher(rootCtx, hub))
+	svc := user.NewAccountService(
+		*addr,
+		repository.NewPgDb(db.PostgresDb(*connString)),
+		publisher.NewAccountPublisher(rootCtx, hub),
+		crypto.NewArgon2())
 
 	svc.ListenForConnections(rootCtx)
 }
