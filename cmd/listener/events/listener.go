@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gobackpack/rmq"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 // Listener will listen for account events
@@ -42,7 +43,7 @@ func handleMessages(ctx context.Context, cons *rmq.Consumer, name string) {
 	for {
 		select {
 		case msg := <-cons.OnMessage:
-			logrus.Infof("%s - %s", name, msg)
+			logrus.Infof("[%s] %s - %s", time.Now().UTC(), name, msg)
 		case err := <-cons.OnError:
 			logrus.Error(err)
 		case <-ctx.Done():
