@@ -91,10 +91,12 @@ func (repo *pgDb) DeleteAccount(ctx context.Context, id string) error {
 func (repo *pgDb) GetAccountsByFilter(ctx context.Context, filter *user.Filter) ([]*user.Account, error) {
 	var accounts []*Account
 
-	repo.db.Scopes(paginate(accounts, &db.Pagination{
-		Page:  filter.Page,
-		Limit: filter.Limit,
-	}, repo.db)).Find(&accounts)
+	repo.db.Scopes(
+		byCountry(repo.db, accounts, filter.Country),
+		paginate(repo.db, accounts, &db.Pagination{
+			Page:  filter.Page,
+			Limit: filter.Limit,
+		})).Find(&accounts)
 
 	return entitiesToAccounts(accounts), nil
 }
@@ -115,9 +117,9 @@ func (repo *pgDb) GetByEmail(ctx context.Context, email string) (*user.Account, 
 	return entityToAccount(acc), nil
 }
 
-func paginate(value interface{}, pagination *db.Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
+func paginate(db *gorm.DB, model interface{}, pagination *db.Pagination) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
-	db.Model(value).Count(&totalRows)
+	db.Model(model).Count(&totalRows)
 
 	pagination.TotalRows = totalRows
 	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
@@ -125,6 +127,18 @@ func paginate(value interface{}, pagination *db.Pagination, db *gorm.DB) func(db
 
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit()).Order(pagination.GetSort())
+	}
+}
+
+func byCountry(db *gorm.DB, model interface{}, country string) func(db *gorm.DB) *gorm.DB {
+	db.Model(model)
+
+	return func(db *gorm.DB) *gorm.DB {
+		if country != "" {
+			db = db.Where("country = ?", country)
+		}
+
+		return db
 	}
 }
 

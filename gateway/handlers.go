@@ -149,9 +149,12 @@ func (api *api) GetAccounts() gin.HandlerFunc {
 			}
 		}
 
+		country, _ := c.GetQuery("country")
+
 		resp, err := api.rpcClient.GetAccountsByFilter(c.Request.Context(), &pbUser.GetAccountsByFilterRequest{
-			Page:  int64(page),
-			Limit: int64(limit),
+			Page:    int64(page),
+			Limit:   int64(limit),
+			Country: country,
 		})
 		if err != nil {
 			logrus.Error(err)

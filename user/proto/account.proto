@@ -15,6 +15,7 @@ service AccountManagement {
 message GetAccountsByFilterRequest {
   int64 page = 1;
   int64 limit = 2;
+  string country = 3;
 }
 
 message AccountsResponse {

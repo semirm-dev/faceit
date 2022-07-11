@@ -23,8 +23,9 @@ type accountService struct {
 
 // Filter when querying data store for user accounts
 type Filter struct {
-	Page  int
-	Limit int
+	Page    int
+	Limit   int
+	Country string
 }
 
 // AccountRepository communicates to data store with user accounts
@@ -169,8 +170,9 @@ func (svc *accountService) DeleteAccount(ctx context.Context, req *pbUser.Delete
 // GetAccountsByFilter will get user accounts based on given filters
 func (svc *accountService) GetAccountsByFilter(ctx context.Context, req *pbUser.GetAccountsByFilterRequest) (*pbUser.AccountsResponse, error) {
 	accounts, err := svc.repo.GetAccountsByFilter(ctx, &Filter{
-		Page:  int(req.Page),
-		Limit: int(req.Limit),
+		Page:    int(req.Page),
+		Limit:   int(req.Limit),
+		Country: req.Country,
 	})
 	if err != nil {
 		return nil, err
