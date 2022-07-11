@@ -91,6 +91,11 @@ func grpcClient() pbUser.AccountManagementClient {
 func TestAccountService_AddAccount_Valid_Returns_Success(t *testing.T) {
 	// given
 	repo.Accounts = nil
+	publisher.events = make(map[string]interface{})
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
 
 	accountReq := &pbUser.AccountRequest{
 		FirstName: "user 1",
@@ -101,19 +106,16 @@ func TestAccountService_AddAccount_Valid_Returns_Success(t *testing.T) {
 		Country:   "country1",
 	}
 
-	rpcClient := grpcClient()
-	rootCtx, rootCancel := context.WithCancel(context.Background())
-	defer rootCancel()
-
 	// when
 	resp, err := rpcClient.AddAccount(rootCtx, accountReq)
 
-	//then
+	// then
 	assert.Nil(t, err)
 	assert.NotEmpty(t, resp.Id)
 	assert.Equal(t, "user1@mail.com", resp.Email)
 	assert.Equal(t, "pwd123-hashed", resp.Password)
 	assert.NotNil(t, resp.CreatedAt)
+	assert.Equal(t, 1, len(repo.Accounts))
 
 	publishedMsg := publisher.events["account_created"]
 	assert.NotNil(t, publishedMsg)
@@ -121,7 +123,6 @@ func TestAccountService_AddAccount_Valid_Returns_Success(t *testing.T) {
 
 func TestAccountService_AddAccount_ExistingEmail_Returns_Fail(t *testing.T) {
 	// given
-	publisher.events["account_created"] = nil
 	repo.Accounts = []*user.Account{
 		{
 			Id:        "123",
@@ -136,6 +137,11 @@ func TestAccountService_AddAccount_ExistingEmail_Returns_Fail(t *testing.T) {
 			DeletedAt: time.Time{},
 		},
 	}
+	publisher.events = make(map[string]interface{})
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
 
 	accountReq := &pbUser.AccountRequest{
 		FirstName: "user 1",
@@ -145,10 +151,6 @@ func TestAccountService_AddAccount_ExistingEmail_Returns_Fail(t *testing.T) {
 		Email:     "user1@mail.com",
 		Country:   "country1",
 	}
-
-	rpcClient := grpcClient()
-	rootCtx, rootCancel := context.WithCancel(context.Background())
-	defer rootCancel()
 
 	// when
 	resp, err := rpcClient.AddAccount(rootCtx, accountReq)
@@ -162,16 +164,229 @@ func TestAccountService_AddAccount_ExistingEmail_Returns_Fail(t *testing.T) {
 	assert.Nil(t, publishedMsg)
 }
 
-func TestAccountService_ModifyAccount(t *testing.T) {
+func TestAccountService_ModifyAccount_Valid_Returns_Success(t *testing.T) {
+	repo.Accounts = []*user.Account{
+		{
+			Id:        "123",
+			FirstName: "user 1",
+			LastName:  "user 1",
+			Nickname:  "user_1",
+			Password:  "pwd123",
+			Email:     "user1@mail.com",
+			Country:   "country1",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+	}
+	publisher.events = make(map[string]interface{})
 
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.AccountMessage{
+		Id:        "123",
+		FirstName: "user 1 changed",
+		LastName:  "user 1",
+		Nickname:  "user_1",
+		Password:  "pwd123 changed",
+		Email:     "user1@mail.com changed",
+		Country:   "country1",
+	}
+
+	resp, err := rpcClient.ModifyAccount(rootCtx, accountReq)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "user 1 changed", resp.FirstName)
+	assert.Equal(t, "pwd123", resp.Password)      // shouldnt be changed
+	assert.Equal(t, "user1@mail.com", resp.Email) // shouldnt be changed
+
+	publishedMsg := publisher.events["account_modified"]
+	assert.NotNil(t, publishedMsg)
 }
 
-func TestAccountService_ChangePassword(t *testing.T) {
+func TestAccountService_ModifyAccount_NoAccount_Returns_Fail(t *testing.T) {
+	repo.Accounts = []*user.Account{
+		{
+			Id:        "123",
+			FirstName: "user 1",
+			LastName:  "user 1",
+			Nickname:  "user_1",
+			Password:  "pwd123",
+			Email:     "user1@mail.com",
+			Country:   "country1",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+	}
+	publisher.events = make(map[string]interface{})
 
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.AccountMessage{
+		Id:        "12345",
+		FirstName: "user 1 changed",
+		LastName:  "user 1",
+		Nickname:  "user_1",
+		Password:  "pwd123 changed",
+		Email:     "user1@mail.com changed",
+		Country:   "country1",
+	}
+
+	resp, err := rpcClient.ModifyAccount(rootCtx, accountReq)
+
+	assert.NotNil(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "account not found")
+
+	publishedMsg := publisher.events["account_modified"]
+	assert.Nil(t, publishedMsg)
+}
+
+func TestAccountService_ChangePassword_ValidPassword_Returns_Success(t *testing.T) {
+	repo.Accounts = []*user.Account{
+		{
+			Id:        "123",
+			FirstName: "user 1",
+			LastName:  "user 1",
+			Nickname:  "user_1",
+			Password:  "pwd123",
+			Email:     "user1@mail.com",
+			Country:   "country1",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+	}
+	publisher.events = make(map[string]interface{})
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.ChangePasswordRequest{
+		Id:          "123",
+		OldPassword: "pwd123",
+		NewPassword: "pwd12345",
+	}
+
+	resp, err := rpcClient.ChangePassword(rootCtx, accountReq)
+
+	assert.Nil(t, err)
+	assert.True(t, resp.Success)
+
+	publishedMsg := publisher.events["account_modified"]
+	assert.NotNil(t, publishedMsg)
+}
+
+func TestAccountService_ChangePassword_InvalidPassword_Returns_Fail(t *testing.T) {
+	repo.Accounts = []*user.Account{
+		{
+			Id:        "123",
+			FirstName: "user 1",
+			LastName:  "user 1",
+			Nickname:  "user_1",
+			Password:  "pwd123",
+			Email:     "user1@mail.com",
+			Country:   "country1",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+	}
+	publisher.events = make(map[string]interface{})
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.ChangePasswordRequest{
+		Id:          "123",
+		OldPassword: "invalid",
+		NewPassword: "pwd12345",
+	}
+
+	resp, err := rpcClient.ChangePassword(rootCtx, accountReq)
+
+	assert.NotNil(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "invalid credentials")
+}
+
+func TestAccountService_ChangePassword_NoAccount_Returns_Fail(t *testing.T) {
+	repo.Accounts = nil
+	publisher.events = make(map[string]interface{})
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.ChangePasswordRequest{
+		Id:          "123",
+		OldPassword: "pwd123",
+		NewPassword: "pwd12345",
+	}
+
+	resp, err := rpcClient.ChangePassword(rootCtx, accountReq)
+
+	assert.NotNil(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "account not found")
 }
 
 func TestAccountService_DeleteAccount(t *testing.T) {
+	repo.Accounts = []*user.Account{
+		{
+			Id:        "123",
+			FirstName: "user 1",
+			LastName:  "user 1",
+			Nickname:  "user_1",
+			Password:  "pwd123",
+			Email:     "user1@mail.com",
+			Country:   "country1",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+	}
+	publisher.events = make(map[string]interface{})
 
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.DeleteAccountRequest{
+		Id: "123",
+	}
+
+	resp, err := rpcClient.DeleteAccount(rootCtx, accountReq)
+
+	assert.Nil(t, err)
+	assert.True(t, resp.Success)
+	assert.Equal(t, 0, len(repo.Accounts))
+}
+
+func TestAccountService_DeleteAccount_NoAccount_Returns_Fail(t *testing.T) {
+	repo.Accounts = nil
+	publisher.events = make(map[string]interface{})
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.DeleteAccountRequest{
+		Id: "123",
+	}
+
+	resp, err := rpcClient.DeleteAccount(rootCtx, accountReq)
+
+	assert.NotNil(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "account not found")
 }
 
 func TestAccountService_GetAccountsByFilter(t *testing.T) {

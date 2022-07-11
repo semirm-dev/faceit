@@ -155,8 +155,15 @@ func (svc *accountService) ChangePassword(ctx context.Context, req *pbUser.Chang
 }
 
 func (svc *accountService) DeleteAccount(ctx context.Context, req *pbUser.DeleteAccountRequest) (*pbUser.DeleteAccountResponse, error) {
-	err := svc.repo.DeleteAccount(ctx, req.Id)
+	account, err := svc.repo.GetById(ctx, req.Id)
 	if err != nil {
+		return nil, err
+	}
+	if account == nil || account.Email == "" {
+		return nil, errors.New("account not found")
+	}
+
+	if err = svc.repo.DeleteAccount(ctx, req.Id); err != nil {
 		return nil, err
 	}
 
