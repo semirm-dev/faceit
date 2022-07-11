@@ -63,27 +63,7 @@ func (repo *inmemory) DeleteAccount(ctx context.Context, id string) error {
 }
 
 func (repo *inmemory) GetAccountsByFilter(ctx context.Context, filter *user.Filter) ([]*user.Account, error) {
-	var accounts []*user.Account
-
-	if filter.Id != "" {
-		acc := repo.getById(filter.Id)
-		if acc != nil {
-			accounts = append(accounts, acc)
-		}
-	}
-
-	if filter.Nickname != "" {
-		acc := repo.getByNickname(filter.Nickname)
-		if acc != nil {
-			accounts = append(accounts, acc)
-		}
-	}
-
-	if filter.Id == "" && filter.Nickname == "" {
-		accounts = repo.accounts
-	}
-
-	return accounts, nil
+	return repo.accounts, nil
 }
 
 func (repo *inmemory) GetById(ctx context.Context, id string) (*user.Account, error) {

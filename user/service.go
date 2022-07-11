@@ -23,8 +23,8 @@ type accountService struct {
 
 // Filter when querying data store for user accounts
 type Filter struct {
-	Id       string
-	Nickname string
+	Page  int
+	Limit int
 }
 
 // AccountRepository communicates to data store with user accounts
@@ -119,7 +119,7 @@ func (svc *accountService) ChangePassword(ctx context.Context, req *pbUser.Chang
 		return nil, err
 	}
 
-	if err := svc.repo.ChangePassword(ctx, req.Id, hashed); err != nil {
+	if err = svc.repo.ChangePassword(ctx, req.Id, hashed); err != nil {
 		return nil, err
 	}
 
@@ -154,8 +154,8 @@ func (svc *accountService) DeleteAccount(ctx context.Context, req *pbUser.Delete
 // GetAccountsByFilter will get user accounts based on given filters
 func (svc *accountService) GetAccountsByFilter(ctx context.Context, req *pbUser.GetAccountsByFilterRequest) (*pbUser.AccountsResponse, error) {
 	accounts, err := svc.repo.GetAccountsByFilter(ctx, &Filter{
-		Id:       req.Id,
-		Nickname: req.Nickname,
+		Page:  int(req.Page),
+		Limit: int(req.Limit),
 	})
 	if err != nil {
 		return nil, err
@@ -187,6 +187,7 @@ func userAccountToProto(account *Account) *pbUser.AccountMessage {
 		Country:   account.Country,
 		CreatedAt: account.CreatedAt.String(),
 		UpdatedAt: account.UpdatedAt.String(),
+		DeletedAt: account.DeletedAt.String(),
 	}
 }
 

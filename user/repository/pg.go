@@ -18,7 +18,7 @@ type Account struct {
 	Lastname  string
 	Nickname  string
 	Password  string
-	Email     string `gorm:"uniqueIndex"`
+	Email     string
 	Country   string
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -38,12 +38,7 @@ func NewPgDb(db *gorm.DB) *pgDb {
 }
 
 func (repo *pgDb) AddAccount(ctx context.Context, account *user.Account) (*user.Account, error) {
-	var existing *Account
-
-	if err := repo.db.Where("email = ?", account.Email).Find(&existing).Error; err != nil {
-		return nil, err
-	}
-	if existing.Id.String() != "" {
+	if emailExists(account.Email, repo.db) {
 		return nil, errors.New(fmt.Sprintf("email already exists"))
 	}
 
@@ -66,17 +61,12 @@ func (repo *pgDb) ModifyAccount(ctx context.Context, id string, account *user.Ac
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return nil, err
 	}
-	if acc.Id.String() == "" {
+	if acc.Email == "" {
 		return nil, errors.New("account not found")
 	}
 
-	if acc.Email != account.Email {
-		if err := repo.db.Where("email = ?", account.Email).Find(&acc).Error; err != nil {
-			return nil, err
-		}
-		if acc.Id.String() != "" {
-			return nil, errors.New(fmt.Sprintf("email already exists"))
-		}
+	if acc.Email != account.Email && emailExists(account.Email, repo.db) {
+		return nil, errors.New(fmt.Sprintf("email already exists"))
 	}
 
 	acc.Firstname = account.Firstname
@@ -97,7 +87,7 @@ func (repo *pgDb) ChangePassword(ctx context.Context, id, password string) error
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return err
 	}
-	if acc.Id.String() == "" {
+	if acc.Email == "" {
 		return errors.New("account not found")
 	}
 
@@ -114,7 +104,7 @@ func (repo *pgDb) DeleteAccount(ctx context.Context, id string) error {
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return err
 	}
-	if acc.Id.String() == "" {
+	if acc.Email == "" {
 		return errors.New("account not found")
 	}
 
@@ -126,21 +116,14 @@ func (repo *pgDb) DeleteAccount(ctx context.Context, id string) error {
 }
 
 func (repo *pgDb) GetAccountsByFilter(ctx context.Context, filter *user.Filter) ([]*user.Account, error) {
-	var accounts []*user.Account
+	var accounts []*Account
 
-	if filter.Id != "" {
+	repo.db.Scopes(paginate(accounts, &db.Pagination{
+		Page:  filter.Page,
+		Limit: filter.Limit,
+	}, repo.db)).Find(&accounts)
 
-	}
-
-	if filter.Nickname != "" {
-
-	}
-
-	if filter.Id == "" && filter.Nickname == "" {
-
-	}
-
-	return accounts, nil
+	return entitiesToAccounts(accounts), nil
 }
 
 func (repo *pgDb) GetById(ctx context.Context, id string) (*user.Account, error) {
@@ -148,7 +131,7 @@ func (repo *pgDb) GetById(ctx context.Context, id string) (*user.Account, error)
 	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
 		return nil, err
 	}
-	if acc.Id.String() == "" {
+	if acc.Email == "" {
 		return nil, errors.New("account not found")
 	}
 
@@ -190,5 +173,22 @@ func entityToAccount(acc *Account) *user.Account {
 		Country:   acc.Country,
 		CreatedAt: acc.CreatedAt,
 		UpdatedAt: acc.UpdatedAt,
+		DeletedAt: acc.DeletedAt.Time,
 	}
+}
+
+func entitiesToAccounts(accs []*Account) []*user.Account {
+	var accounts []*user.Account
+
+	for _, acc := range accs {
+		accounts = append(accounts, entityToAccount(acc))
+	}
+
+	return accounts
+}
+
+func emailExists(email string, db *gorm.DB) bool {
+	var acc *Account
+	db.Where("email = ?", email).Find(&acc)
+	return acc.Email != ""
 }

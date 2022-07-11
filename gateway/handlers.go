@@ -5,6 +5,7 @@ import (
 	pbUser "github.com/semirm-dev/faceit/user/proto"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 )
 
 type CreateAccount struct {
@@ -130,13 +131,27 @@ func (api *api) DeleteAccount() gin.HandlerFunc {
 
 func (api *api) GetAccounts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idParam, ok := c.GetQuery("id")
-		if !ok {
-			idParam = ""
+		var page, limit int
+
+		pageQuery, ok := c.GetQuery("page")
+		if ok {
+			p, err := strconv.Atoi(pageQuery)
+			if err == nil {
+				page = p
+			}
+		}
+
+		limitQuery, ok := c.GetQuery("limit")
+		if ok {
+			l, err := strconv.Atoi(limitQuery)
+			if err == nil {
+				limit = l
+			}
 		}
 
 		resp, err := api.rpcClient.GetAccountsByFilter(c.Request.Context(), &pbUser.GetAccountsByFilterRequest{
-			Id: idParam,
+			Page:  int64(page),
+			Limit: int64(limit),
 		})
 		if err != nil {
 			logrus.Error(err)

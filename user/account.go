@@ -12,4 +12,5 @@ type Account struct {
 	Country   string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	DeletedAt time.Time
 }
