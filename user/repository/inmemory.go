@@ -31,7 +31,6 @@ func (repo *inmemory) ModifyAccount(ctx context.Context, id string, account *use
 		acc.Firstname = account.Firstname
 		acc.Lastname = account.Lastname
 		acc.Nickname = account.Nickname
-		acc.Email = account.Email
 		acc.Country = account.Country
 		acc.UpdatedAt = time.Now().UTC()
 	}
