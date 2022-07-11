@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/semirm-dev/faceit/internal/db"
 	"github.com/semirm-dev/faceit/user"
@@ -37,6 +38,15 @@ func NewPgDb(db *gorm.DB) *pgDb {
 }
 
 func (repo *pgDb) AddAccount(ctx context.Context, account *user.Account) (*user.Account, error) {
+	var existing *Account
+
+	if err := repo.db.Where("email = ?", account.Email).Find(&existing).Error; err != nil {
+		return nil, err
+	}
+	if existing.Id.String() != "" {
+		return nil, errors.New(fmt.Sprintf("email already exists"))
+	}
+
 	acc := accountToEntity(account)
 	acc.Id = uuid.New()
 
@@ -58,6 +68,15 @@ func (repo *pgDb) ModifyAccount(ctx context.Context, id string, account *user.Ac
 	}
 	if acc.Id.String() == "" {
 		return nil, errors.New("account not found")
+	}
+
+	if acc.Email != account.Email {
+		if err := repo.db.Where("email = ?", account.Email).Find(&acc).Error; err != nil {
+			return nil, err
+		}
+		if acc.Id.String() != "" {
+			return nil, errors.New(fmt.Sprintf("email already exists"))
+		}
 	}
 
 	acc.Firstname = account.Firstname
@@ -125,7 +144,15 @@ func (repo *pgDb) GetAccountsByFilter(ctx context.Context, filter *user.Filter) 
 }
 
 func (repo *pgDb) GetById(ctx context.Context, id string) (*user.Account, error) {
-	return nil, nil
+	var acc *Account
+	if err := repo.db.Where("id = ?", id).Find(&acc).Error; err != nil {
+		return nil, err
+	}
+	if acc.Id.String() == "" {
+		return nil, errors.New("account not found")
+	}
+
+	return entityToAccount(acc), nil
 }
 
 func paginate(value interface{}, pagination *db.Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
