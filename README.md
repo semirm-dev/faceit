@@ -3,7 +3,7 @@
 ```shell
 docker-compose up rmq db
 ```
-* After rmq is ready, run services
+* After rmq and pg are ready, run services
 ```shell
 docker-compose up gateway account_listener
 ```
@@ -14,7 +14,7 @@ go test ./... -v
 ```
 
 * **Gateway,** exposes api for accounts management
-* **User,** account management grpc service is responsible for CRUD operations against user accounts
-* **Listener,** demo listener that will listen for account events (CRUD)
+* **User,** account management grpc service, responsible for CRUD operations on user accounts
+* **Listener,** demo accounts event listener, current implementation only logs event type and affected entity id
 
 > Note: I am the author of rmq package/library
