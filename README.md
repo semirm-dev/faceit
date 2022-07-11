@@ -18,3 +18,9 @@ go test ./... -v
 * **Listener,** demo accounts event listener, current implementation only logs event type and affected entity id
 
 > Note: I am the author of rmq package/library
+
+**TODO**
+- [ ] finish tests: TestAccountService_GetAccountsByFilter
+- [ ] finish tests: handlers_test
+- [ ] implement healthcheck for gateway and users service
+- [ ] handle rmq connection loss, reconnection (all code is already ready in rmq package/lib, just use it)
