@@ -24,3 +24,4 @@ go test ./... -v
 - [ ] finish tests: handlers_test
 - [ ] implement healthcheck for gateway and users service
 - [ ] handle rmq connection loss, reconnection (all code is already ready in rmq package/lib, just use it)
+- [ ] add some more logs to gateway handlers
