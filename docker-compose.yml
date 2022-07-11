@@ -9,6 +9,7 @@ services:
     container_name: faceit_user
     command:
       - -rmq_host=faceit_rmq
+      - -connStr=host=faceit_pg port=5432 dbname=faceit_db user=postgres password=postgres sslmode=disable
     ports:
       - "8001:8001"
     networks:
@@ -45,6 +46,17 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - faceit
+  db:
+    image: postgres:latest
+    container_name: faceit_pg
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=faceit_db
+    ports:
+      - "5432:5432"
     networks:
       - faceit
 networks:
