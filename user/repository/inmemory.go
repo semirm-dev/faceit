@@ -8,7 +8,7 @@ import (
 )
 
 type inmemory struct {
-	accounts []*user.Account
+	Accounts []*user.Account
 }
 
 func NewAccountInmemory() *inmemory {
@@ -20,7 +20,7 @@ func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*u
 	account.CreatedAt = time.Now().UTC()
 	account.UpdatedAt = time.Now().UTC()
 
-	repo.accounts = append(repo.accounts, account)
+	repo.Accounts = append(repo.Accounts, account)
 
 	return account, nil
 }
@@ -28,8 +28,8 @@ func (repo *inmemory) AddAccount(ctx context.Context, account *user.Account) (*u
 func (repo *inmemory) ModifyAccount(ctx context.Context, id string, account *user.Account) (*user.Account, error) {
 	acc := repo.getById(id)
 	if acc != nil {
-		acc.Firstname = account.Firstname
-		acc.Lastname = account.Lastname
+		acc.FirstName = account.FirstName
+		acc.LastName = account.LastName
 		acc.Nickname = account.Nickname
 		acc.Country = account.Country
 		acc.UpdatedAt = time.Now().UTC()
@@ -49,11 +49,11 @@ func (repo *inmemory) ChangePassword(ctx context.Context, id, password string) e
 }
 
 func (repo *inmemory) DeleteAccount(ctx context.Context, id string) error {
-	for i, acc := range repo.accounts {
+	for i, acc := range repo.Accounts {
 		if acc.Id == id {
-			copy(repo.accounts[i:], repo.accounts[i+1:])
-			repo.accounts[len(repo.accounts)-1] = nil
-			repo.accounts = repo.accounts[:len(repo.accounts)-1]
+			copy(repo.Accounts[i:], repo.Accounts[i+1:])
+			repo.Accounts[len(repo.Accounts)-1] = nil
+			repo.Accounts = repo.Accounts[:len(repo.Accounts)-1]
 			break
 		}
 	}
@@ -62,7 +62,7 @@ func (repo *inmemory) DeleteAccount(ctx context.Context, id string) error {
 }
 
 func (repo *inmemory) GetAccountsByFilter(ctx context.Context, filter *user.Filter) ([]*user.Account, error) {
-	return repo.accounts, nil
+	return repo.Accounts, nil
 }
 
 func (repo *inmemory) GetById(ctx context.Context, id string) (*user.Account, error) {
@@ -74,7 +74,7 @@ func (repo *inmemory) GetByEmail(ctx context.Context, email string) (*user.Accou
 }
 
 func (repo *inmemory) getById(id string) *user.Account {
-	for _, acc := range repo.accounts {
+	for _, acc := range repo.Accounts {
 		if acc.Id == id {
 			return acc
 		}
@@ -84,7 +84,7 @@ func (repo *inmemory) getById(id string) *user.Account {
 }
 
 func (repo *inmemory) getByEmail(email string) *user.Account {
-	for _, acc := range repo.accounts {
+	for _, acc := range repo.Accounts {
 		if acc.Email == email {
 			return acc
 		}
@@ -94,7 +94,7 @@ func (repo *inmemory) getByEmail(email string) *user.Account {
 }
 
 func (repo *inmemory) getByNickname(nickname string) *user.Account {
-	for _, acc := range repo.accounts {
+	for _, acc := range repo.Accounts {
 		if acc.Nickname == nickname {
 			return acc
 		}

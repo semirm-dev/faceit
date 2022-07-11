@@ -56,8 +56,8 @@ func (repo *pgDb) ModifyAccount(ctx context.Context, id string, account *user.Ac
 		return nil, err
 	}
 
-	acc.Firstname = account.Firstname
-	acc.Lastname = account.Lastname
+	acc.Firstname = account.FirstName
+	acc.Lastname = account.LastName
 	acc.Nickname = account.Nickname
 	acc.Country = account.Country
 
@@ -144,8 +144,8 @@ func byCountry(db *gorm.DB, model interface{}, country string) func(db *gorm.DB)
 
 func accountToEntity(account *user.Account) *Account {
 	return &Account{
-		Firstname: account.Firstname,
-		Lastname:  account.Lastname,
+		Firstname: account.FirstName,
+		Lastname:  account.LastName,
 		Nickname:  account.Nickname,
 		Password:  account.Password,
 		Email:     account.Email,
@@ -156,8 +156,8 @@ func accountToEntity(account *user.Account) *Account {
 func entityToAccount(acc *Account) *user.Account {
 	return &user.Account{
 		Id:        acc.Id.String(),
-		Firstname: acc.Firstname,
-		Lastname:  acc.Lastname,
+		FirstName: acc.Firstname,
+		LastName:  acc.Lastname,
 		Nickname:  acc.Nickname,
 		Password:  acc.Password,
 		Email:     acc.Email,

@@ -4,8 +4,8 @@ import "time"
 
 type Account struct {
 	Id        string
-	Firstname string
-	Lastname  string
+	FirstName string
+	LastName  string
 	Nickname  string
 	Password  string
 	Email     string

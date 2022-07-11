@@ -6,12 +6,14 @@ import (
 	pbUser "github.com/semirm-dev/faceit/user/proto"
 	"github.com/semirm-dev/faceit/user/repository"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 	"net"
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -19,7 +21,11 @@ const (
 	addr    = "8001"
 )
 
-var lis *bufconn.Listener
+var (
+	lis       *bufconn.Listener
+	repo      = repository.NewAccountInmemory()
+	publisher = &mockPublisher{events: make(map[string]interface{})}
+)
 
 func init() {
 	lis = bufconn.Listen(bufSize)
@@ -27,8 +33,8 @@ func init() {
 
 	pbUser.RegisterAccountManagementServer(srv, user.NewAccountService(
 		addr,
-		repository.NewAccountInmemory(),
-		&mockPublisher{},
+		repo,
+		publisher,
 		&mockPwdHash{}))
 
 	go func() {
@@ -82,8 +88,78 @@ func grpcClient() pbUser.AccountManagementClient {
 	return pbUser.NewAccountManagementClient(conn)
 }
 
-func TestAccountService_AddAccount(t *testing.T) {
-	
+func TestAccountService_AddAccount_Valid_Returns_Success(t *testing.T) {
+	// given
+	repo.Accounts = nil
+
+	accountReq := &pbUser.AccountRequest{
+		FirstName: "user 1",
+		LastName:  "user 1",
+		Nickname:  "user_1",
+		Password:  "pwd123",
+		Email:     "user1@mail.com",
+		Country:   "country1",
+	}
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	// when
+	resp, err := rpcClient.AddAccount(rootCtx, accountReq)
+
+	//then
+	assert.Nil(t, err)
+	assert.NotEmpty(t, resp.Id)
+	assert.Equal(t, "user1@mail.com", resp.Email)
+	assert.Equal(t, "pwd123-hashed", resp.Password)
+	assert.NotNil(t, resp.CreatedAt)
+
+	publishedMsg := publisher.events["account_created"]
+	assert.NotNil(t, publishedMsg)
+}
+
+func TestAccountService_AddAccount_ExistingEmail_Returns_Fail(t *testing.T) {
+	// given
+	publisher.events["account_created"] = nil
+	repo.Accounts = []*user.Account{
+		{
+			Id:        "123",
+			FirstName: "user 1",
+			LastName:  "user 1",
+			Nickname:  "user_1",
+			Password:  "pwd123",
+			Email:     "user1@mail.com",
+			Country:   "country1",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+	}
+
+	accountReq := &pbUser.AccountRequest{
+		FirstName: "user 1",
+		LastName:  "user 1",
+		Nickname:  "user_1",
+		Password:  "pwd123",
+		Email:     "user1@mail.com",
+		Country:   "country1",
+	}
+
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	// when
+	resp, err := rpcClient.AddAccount(rootCtx, accountReq)
+
+	// then
+	assert.NotNil(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "email already exists")
+
+	publishedMsg := publisher.events["account_created"]
+	assert.Nil(t, publishedMsg)
 }
 
 func TestAccountService_ModifyAccount(t *testing.T) {

@@ -73,7 +73,7 @@ func (svc *accountService) AddAccount(ctx context.Context, req *pbUser.AccountRe
 		return nil, err
 	}
 
-	if existing.Email == req.Email {
+	if existing != nil && existing.Email == req.Email {
 		return nil, errors.New("email already exists")
 	}
 
@@ -200,8 +200,8 @@ func userAccountsToProto(accounts []*Account) []*pbUser.AccountMessage {
 func userAccountToProto(account *Account) *pbUser.AccountMessage {
 	return &pbUser.AccountMessage{
 		Id:        account.Id,
-		FirstName: account.Firstname,
-		LastName:  account.Lastname,
+		FirstName: account.FirstName,
+		LastName:  account.LastName,
 		Nickname:  account.Nickname,
 		Password:  account.Password,
 		Email:     account.Email,
@@ -214,8 +214,8 @@ func userAccountToProto(account *Account) *pbUser.AccountMessage {
 
 func protoReqToUserAccount(pbAccount *pbUser.AccountRequest) *Account {
 	return &Account{
-		Firstname: pbAccount.FirstName,
-		Lastname:  pbAccount.LastName,
+		FirstName: pbAccount.FirstName,
+		LastName:  pbAccount.LastName,
 		Nickname:  pbAccount.Nickname,
 		Password:  pbAccount.Password,
 		Email:     pbAccount.Email,
@@ -226,8 +226,8 @@ func protoReqToUserAccount(pbAccount *pbUser.AccountRequest) *Account {
 func protoToUserAccount(pbAccount *pbUser.AccountMessage) *Account {
 	return &Account{
 		Id:        pbAccount.Id,
-		Firstname: pbAccount.FirstName,
-		Lastname:  pbAccount.LastName,
+		FirstName: pbAccount.FirstName,
+		LastName:  pbAccount.LastName,
 		Nickname:  pbAccount.Nickname,
 		Password:  pbAccount.Password,
 		Email:     pbAccount.Email,
