@@ -49,7 +49,7 @@ func (api *api) CreateAccount() gin.HandlerFunc {
 		})
 		if err != nil {
 			logrus.Error(err)
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -78,7 +78,7 @@ func (api *api) ModifyAccount() gin.HandlerFunc {
 		})
 		if err != nil {
 			logrus.Error(err)
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -104,7 +104,7 @@ func (api *api) ChangePassword() gin.HandlerFunc {
 		})
 		if err != nil {
 			logrus.Error(err)
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, err.Error())
 			return
 		}
 
