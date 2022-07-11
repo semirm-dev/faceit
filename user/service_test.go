@@ -368,6 +368,9 @@ func TestAccountService_DeleteAccount(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, resp.Success)
 	assert.Equal(t, 0, len(repo.Accounts))
+
+	publishedMsg := publisher.events["account_deleted"]
+	assert.NotNil(t, publishedMsg)
 }
 
 func TestAccountService_DeleteAccount_NoAccount_Returns_Fail(t *testing.T) {
@@ -390,5 +393,50 @@ func TestAccountService_DeleteAccount_NoAccount_Returns_Fail(t *testing.T) {
 }
 
 func TestAccountService_GetAccountsByFilter(t *testing.T) {
+	repo.Accounts = []*user.Account{
+		{
+			Id:        "1",
+			FirstName: "user 1",
+			LastName:  "user 1",
+			Nickname:  "user_1",
+			Password:  "pwd123",
+			Email:     "user1@mail.com",
+			Country:   "country1",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+		{
+			Id:        "2",
+			FirstName: "user 2",
+			LastName:  "user 2",
+			Nickname:  "user_2",
+			Password:  "pwd123",
+			Email:     "user2@mail.com",
+			Country:   "country2",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			DeletedAt: time.Time{},
+		},
+	}
+	publisher.events = make(map[string]interface{})
 
+	rpcClient := grpcClient()
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	accountReq := &pbUser.GetAccountsByFilterRequest{
+		Page:    0,
+		Limit:   0,
+		Country: "country1",
+	}
+
+	resp, err := rpcClient.GetAccountsByFilter(rootCtx, accountReq)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(resp.Accounts))
+
+	acc := resp.Accounts[0]
+	assert.NotNil(t, acc)
+	assert.Equal(t, "1", acc.Id)
 }

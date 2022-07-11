@@ -62,7 +62,13 @@ func (repo *inmemory) DeleteAccount(ctx context.Context, id string) error {
 }
 
 func (repo *inmemory) GetAccountsByFilter(ctx context.Context, filter *user.Filter) ([]*user.Account, error) {
-	return repo.Accounts, nil
+	accounts := repo.Accounts
+
+	if filter.Country != "" {
+		accounts = repo.getByCountry(filter.Country)
+	}
+
+	return accounts, nil
 }
 
 func (repo *inmemory) GetById(ctx context.Context, id string) (*user.Account, error) {
@@ -93,12 +99,14 @@ func (repo *inmemory) getByEmail(email string) *user.Account {
 	return nil
 }
 
-func (repo *inmemory) getByNickname(nickname string) *user.Account {
+func (repo *inmemory) getByCountry(country string) []*user.Account {
+	var accounts []*user.Account
+
 	for _, acc := range repo.Accounts {
-		if acc.Nickname == nickname {
-			return acc
+		if acc.Country == country {
+			accounts = append(accounts, acc)
 		}
 	}
 
-	return nil
+	return accounts
 }
