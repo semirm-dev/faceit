@@ -1,7 +1,7 @@
 **Run**
-* Please run RabbitMQ first so services can have ready connection
+* Please run RabbitMQ and PostgresDb first so services can have ready connection
 ```shell
-docker-compose up rmq
+docker-compose up rmq db
 ```
 * After rmq is ready, run services
 ```shell
