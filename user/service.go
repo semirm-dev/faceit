@@ -21,7 +21,7 @@ type accountService struct {
 	pwdHash PasswordHash
 }
 
-// Filter when querying data store for user accounts
+// Filter to apply when querying data store for user accounts
 type Filter struct {
 	Page    int
 	Limit   int
